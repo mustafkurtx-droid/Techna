@@ -1,0 +1,19 @@
+# Techna dependencies.
+#
+# Every name below is (1) on the curated allowlist in techna/security.py and
+# (2) actively verified to exist on PyPI by tools/verify_deps.py BEFORE any
+# install happens (slopsquatting defense). Do not add a package here without
+# also adding it to APPROVED_PACKAGES.
+#
+# pandas is pinned < 3.0: Techna targets the stable pandas 2.x API and not
+# every dependency (e.g. yfinance) tracks pandas 3.0 yet.
+
+yfinance>=0.2.40
+pandas>=2.2,<3.0
+numpy>=1.26
+matplotlib>=3.8
+rich>=13.7
+pytest>=8.0
+statsmodels>=0.14
+scipy>=1.12
+

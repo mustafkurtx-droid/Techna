@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "techna"
+version = "0.0.0"
+description = "Deterministic technical-analysis agent for stocks (signals, not advice)."
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["techna", "techna.indicators"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true       # third-party (pandas/numpy/statsmodels) ship partial stubs
+explicit_package_bases = true
+# NOTE: the CLI entry script `techna.py` shares the package name `techna/`, so
+# mypy cannot scan both in one pass. Run two passes:
+#   python -m mypy techna
+#   python -m mypy techna.py
+# Both are kept clean.
+
+[tool.ruff]
+target-version = "py311"

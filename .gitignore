@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+data_cache/
+cache/
+reports/
+.DS_Store
+notebooks/_showcase_output/
+.coverage
+.claude/settings.local.json

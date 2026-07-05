@@ -1,0 +1,15 @@
+# Techna development / code-quality tooling (NOT runtime dependencies).
+#
+# Every name here is on the curated allowlist in techna/security.py and is
+# verified to exist on PyPI by tools/verify_deps.py (slopsquatting defense).
+# Install with:  python -m pip install -r requirements-dev.txt
+#
+# ruff    — linter (pyflakes + pycodestyle + import hygiene)
+# mypy    — static type checker (the code is fully type-hinted)
+# vulture — dead-code / unused-symbol detector
+
+ruff>=0.6
+mypy>=1.11
+vulture>=2.11
+pytest-cov>=5.0
+pip-audit>=2.7

@@ -1,0 +1,16 @@
+# Techna notebook-authoring tooling (NOT runtime, NOT code-quality tooling).
+#
+# Needed only to build/re-execute notebooks/proof_of_correctness.ipynb.
+# Every name here is on the curated allowlist in techna/security.py and is
+# verified to exist on PyPI by tools/verify_deps.py (slopsquatting defense).
+#
+# ta          — independent third-party technical-indicator library, used ONLY
+#               to cross-check Techna's own indicators (never imported by techna/)
+# nbformat    — construct/read .ipynb JSON structure
+# nbconvert   — execute notebook cells and save outputs (via ExecutePreprocessor)
+# ipykernel   — the Python kernel nbconvert executes cells against
+
+ta>=0.11
+nbformat>=5.10
+nbconvert>=7.16
+ipykernel>=6.29
