@@ -4,6 +4,11 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+> **Every number in every report is plain Python you can read — never an LLM guess.**
+> 19 indicators, 236 golden-fixture tests, and a self-contained Jupyter notebook that proves
+> it: your exact chart, the exact code that drew it, and the exact code that computed it, all
+> in one file, right below each other.
+
 A **deterministic technical-analysis agent** for stocks. Techna reports
 indicator *states* (e.g. "RSI = 72, in the overbought zone"); it never says
 "buy" or "sell" and gives no financial advice. Every number is computed by
