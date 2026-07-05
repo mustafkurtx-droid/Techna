@@ -1,0 +1,9 @@
+# These notebooks embed base64-encoded chart images, which inflates their
+# raw byte size enormously (megabytes of JSON text for a handful of PNGs).
+# Without this, GitHub's Linguist counts that as "Jupyter Notebook" language,
+# making the repo's language bar wildly misrepresent the actual codebase
+# (which is Python). Mark them generated so Linguist excludes them from
+# language statistics -- they are build artifacts (see tools/build_*.py),
+# not hand-written source.
+notebooks/full_showcase.ipynb linguist-generated=true
+notebooks/proof_of_correctness.ipynb linguist-generated=true
