@@ -1329,3 +1329,26 @@ Notebook döngüsünde, her resim hücresinin HEMEN ALTINA eklendi (kaynak kod h
 **Not:** Çok-grafikli bölümlerde (econometrics 5 grafik, risk 3 grafik) aynı modül açıklaması
 her grafiğin altında tekrarlanıyor — bilinçli bir basitlik tercihi (her grafik bağımsız
 okunabilir olsun diye), yanlış değil sadece hafif tekrarlı.
+
+## GitHub sunumu düzenlendi: açıklama, topics, lisans, CI, rozetler (2026-07-05)
+Kullanıcı depo sayfasının ekran görüntüsünü paylaştı: "No description, website, or topics
+provided" ve tüm dosyaların yanında aynı ilk commit mesajı görünüyordu. İstek: "tüm repoyu
+düzenleyip okunabilir hale getirelim herşeyiyle."
+
+**Yapılan:**
+1. GitHub API ile depo açıklaması eklendi (GitHub'ın "About" kutusu artık boş değil).
+2. GitHub API ile 10 topic eklendi (technical-analysis, stock-market, python, jupyter-notebook,
+   quantitative-finance, deterministic, pandas, trading-indicators, golden-testing, no-llm-math).
+3. `LICENSE` dosyası eklendi — kullanıcıya sorulup MIT seçildi (varsayılan/en izin verici).
+4. `.github/workflows/tests.yml` eklendi — her push/PR'da: verify_deps.py (slopsquatting
+   kontrolü) + ruff + mypy (2 geçiş) + pytest -q otomatik çalışacak. Depo artık gerçek bir CI
+   yeşil-tik rozetine sahip olacak.
+5. README'nin başına 3 rozet eklendi: Tests (CI durumu), Python 3.11+, License MIT.
+
+**Bilinçli olarak dokunulmayan:** İlk büyük commit'in ("feat: complete roadmap (phases 32-37)...")
+mesajı — GitHub'ın dosya listesinde her satırın yanında bu mesabın görünmesi normal/beklenen
+davranış (o commit her dosyayı ilk kez eklediği için). Bunu değiştirmek geçmişi yeniden yazıp
+tekrar force-push gerektirirdi; içerik zaten doğru ve yazar zaten kullanıcı olduğu için bu riske
+değmedi, kullanıcıya açıklandı.
+
+**Doğrulama:** 236 test hepsi geçti, ruff/mypy temiz. Değişiklikler commit'lenip push edildi.
