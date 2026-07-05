@@ -6,6 +6,28 @@ indicator *states* (e.g. "RSI = 72, in the overbought zone"); it never says
 verifiable Python and tested against frozen golden fixtures — the LLM never
 estimates a value.
 
+## Example output (real run, AAPL)
+
+| Price overview (MAs, Bollinger, filtered levels) | Momentum (RSI, Stochastic, MACD) |
+|---|---|
+| ![Overview](docs/screenshots/example_overview.png) | ![Momentum](docs/screenshots/example_momentum.png) |
+
+| Fibonacci retracement + empirical touch stats | Volume profile (POC / value area) |
+|---|---|
+| ![Fibonacci](docs/screenshots/example_fibonacci.png) | ![Volume Profile](docs/screenshots/example_volume_profile.png) |
+
+**Every one of these charts — and 18 more — is also embedded directly inside a portable
+Jupyter notebook** (`{TICKER}_report.ipynb`) that every run generates by default. GitHub renders
+`.ipynb` files natively, so you can open the two pre-built proof notebooks right here without
+downloading anything:
+
+- **[notebooks/full_showcase.ipynb](notebooks/full_showcase.ipynb)** — one real end-to-end run
+  (AAPL): terminal dashboard, all 22 charts, every module's plain-English finding, and a live
+  pytest run, each chart preceded by the exact `report_builder.draw_*_chart` source that drew it.
+- **[notebooks/proof_of_correctness.ipynb](notebooks/proof_of_correctness.ipynb)** — cross-checks
+  Techna's RSI/MACD/Bollinger/ADX against the independent `ta` library and known-answer
+  econometric tests (Hurst, ADF) on synthetic data.
+
 ## Non-negotiable principles
 
 1. **No LLM-computed numbers.** Every value is produced by verifiable Python
