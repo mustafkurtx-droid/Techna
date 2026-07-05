@@ -208,6 +208,11 @@ them can silently drift from the real running code — the goal being that a rea
 every number shown against the exact input, parameters, and code that produced it, without
 needing a separate showcase notebook or trusting the prose alone.
 
+Right below every chart, a **"How this chart works"** cell explains — in plain English, not raw
+code — what's plotted and how the underlying numbers were derived, pulled live from the same
+functions' own docstrings via `inspect.getdoc()`. Source code above proves what ran; this
+explains what it means, for a reader who doesn't want to parse Python to understand the chart.
+
 ## Status
 
 **Phases 0–18 complete.** Data layer → 13 indicator modules → statistical

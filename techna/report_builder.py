@@ -2428,6 +2428,47 @@ def _chart_source_markdown(ticker: str, img_name: str) -> str:
     return f"**Source: `report_builder.{fn_name}`**\n```python\n{source}```"
 
 
+def _chart_explanation_markdown(ticker: str, img_name: str, compute_fns: list[Any]) -> str:
+    """Return a plain-English "how this works" block placed BELOW the chart.
+
+    This complements (does not replace) the raw source-code cells shown
+    ABOVE the chart: those prove exactly what ran; this explains, in prose,
+    what the reader is looking at and how the underlying numbers were
+    derived. Both halves are pulled live via ``inspect.getdoc()`` from the
+    real docstrings (the ``draw_*_chart`` function's own docstring, plus
+    each relevant indicator module's docstring) -- never hand-typed, so this
+    can't silently drift from what the code actually does.
+    """
+    stem = img_name[:-4] if img_name.endswith(".png") else img_name
+    suffix = stem[len(ticker) + 1:] if stem.startswith(f"{ticker}_") else stem
+    fn_name = f"draw_{suffix}_chart"
+    draw_fn = globals().get(fn_name)
+    draw_doc = inspect.getdoc(draw_fn) if draw_fn is not None else None
+
+    lines = ["#### How this chart works\n"]
+    if draw_doc:
+        lines.append(f"**What's plotted:** {draw_doc}\n")
+
+    seen_modules: set[str] = set()
+    computed_parts = []
+    for fn in compute_fns:
+        mod = inspect.getmodule(fn)
+        mod_name = mod.__name__ if mod is not None else fn.__module__
+        if mod_name in seen_modules:
+            continue
+        seen_modules.add(mod_name)
+        doc = (inspect.getdoc(mod) if mod is not None else None) or inspect.getdoc(fn)
+        if doc:
+            short_name = mod_name.rsplit(".", 1)[-1]
+            computed_parts.append(f"**`{short_name}`** ({fn.__name__}): {doc}")
+
+    if computed_parts:
+        lines.append("**How the underlying numbers are computed:**\n")
+        lines.append("\n\n".join(computed_parts))
+
+    return "\n".join(lines)
+
+
 def _indicator_source_markdown(fn: Any) -> str:
     """Return a markdown fenced code block with the live source of an
     indicator/scoring ``compute_*`` function, via ``inspect.getsource()``.
@@ -2586,6 +2627,7 @@ def render_report_notebook(ticker: str, result_json_path: Path, out_dir: Path, c
                 alt = img_name.replace("_", " ").replace(".png", "").title()
                 cells.append(nbf.v4.new_markdown_cell(_chart_source_markdown(ticker, img_name)))
                 cells.append(nbf.v4.new_markdown_cell(_embed_image_markdown(out_dir / img_name, alt)))
+                cells.append(nbf.v4.new_markdown_cell(_chart_explanation_markdown(ticker, img_name, compute_fns)))
 
     nb["cells"] = cells
     

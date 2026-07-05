@@ -147,6 +147,18 @@ def test_notebook_content_structure_and_no_code_cells(monkeypatch, golden_long_d
         for text in source_texts
     )
 
+    # Assert each chart is ALSO followed by a plain-English "how this chart
+    # works" explanation (docstrings, not raw code) -- complementing the
+    # source-code cells above the image with prose a non-programmer can read.
+    overview_idx = next(
+        i for i, text in enumerate(source_texts)
+        if "![Test Overview](data:image/png;base64," in text
+    )
+    explanation_text = source_texts[overview_idx + 1]
+    assert explanation_text.startswith("#### How this chart works")
+    assert "What's plotted:" in explanation_text
+    assert "How the underlying numbers are computed:" in explanation_text
+
 
 def test_notebook_is_portable_without_sibling_pngs(monkeypatch, golden_long_df, tmp_path):
     """Scenario: copying ONLY the .ipynb (no PNGs) elsewhere still shows every chart,

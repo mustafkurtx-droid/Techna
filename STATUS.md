@@ -1298,3 +1298,34 @@ okumayacağını ayırt edebilir; eksiksizlik, seçici okunabilirlikten öncelik
 **FİNAL SÜRÜM DURUMU:** 236 test · ruff temiz · mypy (2 geçiş) temiz · sıfır disiplin ihlali ·
 20 modül (kapsam kasıtlı olarak genişletilmiş bırakıldı) · README/STATUS/ROADMAP güncel ·
 production-ready seviyesi YÜKSEK. Bu, projenin bu konuşma dizisindeki son durumudur.
+
+## Grafiğin altına "How this chart works" açıklaması eklendi (2026-07-05)
+Kullanıcının isteği: "jupyter notebookda... hepsinin kodunun nasıl çalıştığını anlattığını
+ekliyelim grafiklerin hemen altına." Notebook'ta zaten grafiğin ÜSTÜNDE ham kaynak kod
+(`inspect.getsource()`) gösteriliyordu — bu, "ne çalıştı"nın kanıtı. Kullanıcı şimdi grafiğin
+ALTINA, düz dille "bu ne anlama geliyor" açıklaması istedi — kod okumayan bir okuyucu için.
+
+**Yapılan:** `report_builder.py`'a `_chart_explanation_markdown(ticker, img_name, compute_fns)`
+eklendi. İki parçalı içerik üretiyor, ikisi de `inspect.getdoc()` ile CANLI çekiliyor (elle
+yazılmış metin yok, bayatlama riski yok):
+1. **"What's plotted":** `draw_{suffix}_chart` fonksiyonunun kendi docstring'i.
+2. **"How the underlying numbers are computed":** o grafiğin bağlı olduğu `compute_*`
+   fonksiyon(lar)ının modül-seviyesi docstring'i (fonksiyon docstring'inden daha zengin —
+   örn. `regime.py`'ın "Frozen math conventions" bloğu gibi).
+Notebook döngüsünde, her resim hücresinin HEMEN ALTINA eklendi (kaynak kod hâlâ üstte).
+
+**Doğrulama:**
+- Gerçek AAPL koşusu: 154 hücre (131→154), 23 açıklama hücresi (23 grafikle birebir eşleşiyor).
+  Overview grafiğinin altında `trend.py`'ın modül docstring'i, Donchian'ın altında
+  `donchian.py`'ın docstring'i doğru şekilde çıktı — elle görsel kontrol edildi.
+- `tests/test_report_notebook.py`'a yeni assertler eklendi: overview grafiğinin hemen ardından
+  gelen hücrenin `"#### How this chart works"` ile başladığını, "What's plotted:" ve "How the
+  underlying numbers are computed:" ifadelerini içerdiğini doğruluyor.
+- 236 test (aynı sayı — yeni assertler mevcut teste eklendi, yeni test fonksiyonu değil),
+  hepsi geçti. `ruff check` "All checks passed!". `mypy techna` + `mypy techna.py` (2 ayrı
+  geçiş) ikisi de Success.
+- README güncellendi: yeni özellik notebook açıklama paragrafına eklendi.
+
+**Not:** Çok-grafikli bölümlerde (econometrics 5 grafik, risk 3 grafik) aynı modül açıklaması
+her grafiğin altında tekrarlanıyor — bilinçli bir basitlik tercihi (her grafik bağımsız
+okunabilir olsun diye), yanlış değil sadece hafif tekrarlı.
