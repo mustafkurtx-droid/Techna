@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/mustafkurtx-droid/Techna/actions/workflows/tests.yml/badge.svg)](https://github.com/mustafkurtx-droid/Techna/actions/workflows/tests.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
 
 > **Every number in every report is plain Python you can read — never an LLM guess.**
 > 19 indicators, 236 golden-fixture tests, and a self-contained Jupyter notebook that proves
