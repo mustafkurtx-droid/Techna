@@ -1352,3 +1352,34 @@ tekrar force-push gerektirirdi; içerik zaten doğru ve yazar zaten kullanıcı 
 değmedi, kullanıcıya açıklandı.
 
 **Doğrulama:** 236 test hepsi geçti, ruff/mypy temiz. Değişiklikler commit'lenip push edildi.
+
+## Dış iddia doğrulama turu: 5 "proof of correctness" iddiası tek tek kanıtlandı (2026-07-11)
+Kullanıcı, projenin doğruluk disiplinini özetleyen 5 maddelik bir açıklama sundu (golden fixture
+bağımsızlığı, `proof_of_correctness.ipynb`'in `ta` kütüphanesiyle çapraz doğrulaması, chart-data-
+fidelity testleri, look-ahead koruması, "sadece testlere güvenme" kuralı) ve her birinin gerçekten
+koda karşılık gelip gelmediğinin ayrı ayrı doğrulanmasını istedi — pazarlama dili değil, kanıt.
+
+**Doğrulama sonuçları (5/5 doğrulandı):**
+1. **Golden fixture bağımsızlığı** — `tools/generate_golden.py` incelendi: `CLOSES` listesi elle
+   yazılmış sabit sayılar (stdlib-only, pandas/numpy'a bağımlı değil, üretim kodunu hiç çağırmıyor).
+   `tests/test_trend.py`'de `SMA[2] = (100.0+101.5+102.0)/3 = 101.16666667` elle hesaplanmış referans
+   değeri doğrulandı.
+2. **`ta` kütüphanesiyle çapraz doğrulama** — `notebooks/proof_of_correctness.ipynb` içinde
+   `ta_lib.momentum.RSIIndicator`/`ta_lib.trend.MACD` gerçekten import edilip çağrılıyor; notebook'un
+   GERÇEK çalıştırılmış çıktısı incelendi (kod hücresi değil, kayıtlı `outputs`): RSI/MACD/BB/ADX
+   farkları 1e-14 mertebesinde (makine hassasiyeti).
+3. **Chart-data-fidelity testleri** — `tests/test_chart_data_fidelity.py` (25 test) incelendi:
+   `close_line.get_ydata()` gibi gerçek `Line2D`/`Bar` nesnelerinden veri çekilip
+   `np.testing.assert_allclose()` ile girdi verisine karşı kıyaslanıyor, iddia edildiği gibi.
+4. **Look-ahead koruması** — iki bağımsız örnek doğrulandı:
+   `test_donchian_no_lookahead_today_cannot_lift_its_own_band` (Donchian kanalı) ve
+   `test_range_52w_break_events_with_lookahead_guard` (52-hafta events dedektörü), ikisi de
+   `shift(1)` ile bugünün barının kendi penceresini etkilemediğini kanıtlıyor.
+5. **"Sadece testlere güvenme" kuralı** — STATUS.md'nin kendi geçmişinden somut bir örnek
+   doğrulandı: Fibonacci grafiğindeki swing-high/low etiket-legend çakışması (bkz. "5 hisse üstünde
+   simülasyon" bölümü) 236 test YEŞİLKEN bulundu, çünkü fidelity testleri sadece sayısal veriyi
+   kontrol ediyor — görsel yerleşim çakışmasını hiçbir test yakalayamazdı, sadece elle görsel
+   inceleme yakaladı.
+
+**Sonuç:** 5 iddianın hepsi kod ve gerçek çalıştırılmış çıktılarla birebir doğrulandı, abartı/pazarlama
+dili yok. Kod değişikliği yapılmadı — bu tur salt bağımsız doğrulama turuydu.
