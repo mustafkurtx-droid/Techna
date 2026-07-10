@@ -10,3 +10,4 @@ reports/
 notebooks/_showcase_output/
 .coverage
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
