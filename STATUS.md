@@ -1383,3 +1383,29 @@ koda karşılık gelip gelmediğinin ayrı ayrı doğrulanmasını istedi — pa
 
 **Sonuç:** 5 iddianın hepsi kod ve gerçek çalıştırılmış çıktılarla birebir doğrulandı, abartı/pazarlama
 dili yok. Kod değişikliği yapılmadı — bu tur salt bağımsız doğrulama turuydu.
+
+## Dış iddia doğrulama turu 2: notebook araç zinciri (5 iddia) (2026-07-11)
+Kullanıcı, proof notebook'larının kullandığı kütüphane/altyapı zincirini özetleyen 5 maddelik
+ikinci bir açıklama sundu (ta çapraz doğrulama, pandas/numpy, statsmodels/scipy, nbformat/
+nbclient/ipykernel, canlı pytest çalıştırma) ve her birinin ayrı ayrı doğrulanmasını istedi.
+
+**Doğrulama sonuçları (5/5 doğrulandı):**
+1. **`ta` çapraz doğrulama + matematiksel açıklama** — `proof_of_correctness.ipynb`'de RSI
+   farkının Wilder-smoothing seed etkisinden kaynaklandığını gösteren dürüst bir sönüm tablosu
+   bulundu (cherry-pick değil); steady-state karşılaştırma makine hassasiyetine iniyor.
+2. **pandas/numpy** — `grep` ile doğrulandı: `.shift(1)` 12 ayrı yerde, `np.log(df["Close"]).diff()`
+   ile log getiri, `.std(ddof=0)`/`.std(ddof=1)` ile standart sapma — hepsi gerçek kullanımda.
+3. **statsmodels/scipy** — `techna/indicators/econometrics.py`'de `stattools.acf/pacf`,
+   `QuantReg`, `acorr_ljungbox`, `scipy.stats.jarque_bera`, `stattools.adfuller`, `stattools.kpss`
+   hepsi gerçek import+çağrı, elle yeniden implemente edilmemiş.
+4. **nbformat/nbclient/ipykernel** — `tools/build_proof_notebook.py` ve
+   `tools/build_showcase_notebook.py`'de `NotebookClient(kernel_name="techna-py3")` gerçekten
+   kullanılıyor; `jupyter kernelspec list` ile `techna-py3` kernelinin sistemde gerçekten kayıtlı
+   olduğu doğrulandı (sahte/placeholder değil).
+5. **Canlı pytest çalıştırma** — `full_showcase.ipynb`'de `subprocess.run([sys.executable, "-m",
+   "pytest", "-q"], ...)` kullanılıyor (literal `!pytest` shell magic'i değil, işlevsel olarak
+   eşdeğer ve daha sağlam bir yöntem — küçük bir terminolojik nüans olarak not edildi); notebook'un
+   kayıtlı çıktısında gerçek `pytest exit code: 0` bulundu.
+
+**Sonuç:** 5 iddianın hepsi kod ve gerçek çalıştırılmış çıktılarla doğrulandı. Kod değişikliği
+yapılmadı — salt bağımsız doğrulama turu.
