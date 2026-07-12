@@ -15,6 +15,7 @@ Design notes
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, List, Optional
@@ -206,7 +207,10 @@ def get_prices(
     start, end : str, optional
         Date bounds passed to the fetcher (ignored once cached).
     period : str, optional
-        Time period to fetch (e.g., '2y', '5y', 'max').
+        Time period to fetch (e.g., '2y', '5y', 'max'). Part of the cache key,
+        along with (start, end) when those are given instead -- a cache
+        written for one period/date-range is never silently reused to
+        satisfy a request for a different one.
     interval : str
         Bar interval (default daily). Part of the cache key.
     cache_dir : path, optional
@@ -231,7 +235,20 @@ def get_prices(
     ticker = str(ticker).strip().upper()
     cache_dir = Path(cache_dir) if cache_dir else config.CACHE_DIR
     cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_path = cache_dir / f"{ticker}_{interval}.csv"
+
+    # The cache key MUST include how much history was requested. Without this,
+    # a ticker fetched once with e.g. period="5y" would silently satisfy every
+    # later request for that (ticker, interval) -- including one asking for
+    # "2y" -- by returning the full 5-year file, with no error and no size
+    # check. The caller's `data_provenance.period_requested` would then say
+    # "2y" while the actual data spans 5 years. (Found for real: a fresh
+    # request served a stale wider-period cache.)
+    if start is not None or end is not None:
+        span_key = f"{start or 'none'}_{end or 'none'}"
+    else:
+        span_key = period or config.DEFAULT_PERIOD
+    span_key = re.sub(r"[^A-Za-z0-9_-]", "-", span_key)
+    cache_path = cache_dir / f"{ticker}_{interval}_{span_key}.csv"
 
     df: Optional[pd.DataFrame] = None
     source: Optional[str] = None

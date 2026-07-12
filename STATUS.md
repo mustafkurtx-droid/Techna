@@ -1409,3 +1409,51 @@ nbclient/ipykernel, canlı pytest çalıştırma) ve her birinin ayrı ayrı do�
 
 **Sonuç:** 5 iddianın hepsi kod ve gerçek çalıştırılmış çıktılarla doğrulandı. Kod değişikliği
 yapılmadı — salt bağımsız doğrulama turu.
+
+## Bug bulundu ve düzeltildi: cache anahtarı `period`'u içermiyordu (2026-07-12)
+Kullanıcının şüphesi: "rapor oluştururken 2 yıllık yazıp 5 yıllık veri çekiyor sanırım." Kontrol
+edilip DOĞRULANDI — gerçek, tekrar üretilebilir bir bug.
+
+**Kök neden:** `data_layer.get_prices()`'ta cache dosya adı sadece `{ticker}_{interval}.csv`
+idi — `period` hiç anahtarın parçası değildi. Bir ticker bir kere `period="5y"` ile
+çekilip cache'lendiyse, sonraki HERHANGİ bir istek (varsayılan `2y` dahil) — cache tarih
+bazlı "bayat" sayılmadığı sürece (`CACHE_STALE_DAYS`, varsayılan 1 gün) — o 5 yıllık dosyayı
+sessizce döndürüyordu. `data_provenance.period_requested` alanı sadece girdi parametresini
+olduğu gibi yansıttığı için, JSON'da "2y" yazarken gerçek veri 5 yıllık olabiliyordu — tam
+kullanıcının şüphelendiği tutarsızlık.
+
+**İzole kanıt (ağdan bağımsız, sahte fetcher ile):**
+```
+Step 1 (period=5y requested): fixture 1255 bars, 2021-07-01 to 2026-04-22
+Step 2 (period=2y requested): cache   1255 bars, 2021-07-01 to 2026-04-22   <- BUG: hâlâ 5 yıllık
+```
+
+**Düzeltme:** Cache anahtarına `period` (veya `start`/`end` verildiyse onlar) eklendi:
+`{ticker}_{interval}_{period}.csv` (örn. `AAPL_1d_2y.csv` vs `AAPL_1d_5y.csv` artık ayrı
+dosyalar). Farklı period istekleri artık birbirini asla sessizce tatmin edemiyor — cache
+miss olur, doğru period'la yeniden çekilir.
+
+**Doğrulama:**
+- Aynı izole test tekrarlandı: Step 2 artık `source: fixture` dönüyor (cache değil), doğru
+  501 bar (2 yıllık) veriyor.
+- `tests/test_cache_staleness.py`'a yeni regresyon testi eklendi
+  (`test_cache_key_includes_period_so_different_periods_never_collide`) — 5y cache'in 2y
+  isteğini sessizce tatmin etmediğini VE 5y cache'in kendi anahtarı altında hâlâ durduğunu
+  (üçüncü çağrıda tekrar fetch edilmediğini) kanıtlıyor.
+- 3 eski test (`test_data_layer.py`, `test_cache_staleness.py`) yeni dosya adı formatına
+  güncellendi (hardcoded `TEST_1d.csv` → `TEST_1d_{period}.csv`).
+- 236 → 237 test, hepsi geçti. `ruff check` temiz (proje dosyaları için).
+
+**Yan bulgu (kod değil, ortam sorunu):** `mypy` bu turda 41+ hatayla "kırık" görünüyordu —
+sebebi `pandas-stubs` paketinin bu makinede sürüm 3.0.3 (pandas 3.0 API'si) olarak kayıtsız
+kurulu olmasıydı, oysa proje bilinçli olarak `pandas<3.0` kullanıyor (2.3.3 çalışıyor).
+`requirements-dev.txt`'te `pandas-stubs` hiç tanımlı değil — muhtemelen mypy'nin "eksik stub"
+önerisiyle bir noktada otomatik kurulmuş. Paket kaldırılınca `mypy techna` + `mypy techna.py`
+ikisi de tekrar Success oldu. CI etkilenmemiş (temiz bir ortamdan kurulum yapıyor).
+
+**Ayrıca fark edilen (dokunulmadı, kullanıcıya bildirildi):** `tools/generate_gram_gold.py` —
+oturumun en başından beri git'te izlenmeyen (untracked), commit edilmemiş bir dosya. Altın
+vadeli işlem + USD/TRY kurunu birleştirip "Gram Altın TRY" sentetik pseudo-ticker cache'i
+üretiyor, Techna'nın normal veri akışı dışında. Eski cache dosya adı formatını kullandığı için
+bu düzeltmeyle uyumsuz hale geldi — ama dosyaya dokunulmadı (kullanıcının devam eden/deneysel
+işi olabilir), sadece bulgular STATUS.md'ye not düşüldü.

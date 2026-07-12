@@ -21,7 +21,7 @@ def test_fetch_returns_canonical_schema(golden_fetcher, tmp_cache):
 def test_fetch_once_then_reuse_cache(golden_fetcher, tmp_cache):
     first = dl.get_prices("test", cache_dir=tmp_cache, fetcher=golden_fetcher)
     assert first.source == "fixture"
-    assert (tmp_cache / "TEST_1d.csv").exists()
+    assert (tmp_cache / f"TEST_1d_{config.DEFAULT_PERIOD}.csv").exists()
 
     def exploding_fetcher(*args, **kwargs):
         raise AssertionError("fetcher must not be called once data is cached")

@@ -1,8 +1,8 @@
 """Tests for the cache staleness guard in the data layer.
 
 Without a staleness check, an automated daily run would fetch once on day one
-and then silently reuse that frozen snapshot forever (the cache key is only
-(ticker, interval) — no date, no TTL). These tests lock in the guard:
+and then silently reuse that frozen snapshot forever (the cache key is
+(ticker, interval, period) — no date, no TTL). These tests lock in the guard:
 
   * stale cache + working network  -> auto-refresh, source == "network"
   * stale cache + failing network  -> serve the stale cache WITH a warning
@@ -28,10 +28,16 @@ def _frame(end: pd.Timestamp, n: int = 30) -> pd.DataFrame:
     )
 
 
-def _seed_cache(tmp_cache, df: pd.DataFrame) -> None:
+def _cache_filename(period: str = "2y") -> str:
+    """The cache key includes (ticker, interval, period) -- match it exactly,
+    same as the data layer does internally."""
+    return f"TEST_1d_{period}.csv"
+
+
+def _seed_cache(tmp_cache, df: pd.DataFrame, period: str = "2y") -> None:
     """Write a cache file exactly the way the data layer does."""
     tmp_cache.mkdir(parents=True, exist_ok=True)
-    df.to_csv(tmp_cache / "TEST_1d.csv", index=True)
+    df.to_csv(tmp_cache / _cache_filename(period), index=True)
 
 
 STALE_END = pd.Timestamp.today().normalize() - pd.Timedelta(days=30)
@@ -58,7 +64,7 @@ def test_stale_cache_is_auto_refreshed_from_network(monkeypatch, tmp_path):
     assert any("refreshed from the network" in w for w in res.warnings)
 
     # The refreshed data must also have been written back to the cache.
-    cached = pd.read_csv(tmp_cache / "TEST_1d.csv", index_col=0, parse_dates=True)
+    cached = pd.read_csv(tmp_cache / _cache_filename(), index_col=0, parse_dates=True)
     assert cached.index.max().normalize() == FRESH_END
 
 
@@ -121,7 +127,7 @@ def test_stale_refresh_respects_period_argument(monkeypatch, tmp_path):
     """The auto-refresh must forward the caller's period, not silently use
     the default."""
     tmp_cache = tmp_path / "cache"
-    _seed_cache(tmp_cache, _frame(STALE_END))
+    _seed_cache(tmp_cache, _frame(STALE_END), period="5y")
 
     seen = {}
 
@@ -133,3 +139,38 @@ def test_stale_refresh_respects_period_argument(monkeypatch, tmp_path):
 
     dl.get_prices("TEST", cache_dir=tmp_cache, period="5y")
     assert seen["period"] == "5y"
+
+
+def test_cache_key_includes_period_so_different_periods_never_collide(tmp_path):
+    """Regression: the cache key used to be (ticker, interval) only, so a
+    ticker fetched once with period="5y" would silently satisfy a LATER
+    request for period="2y" with the full 5-year file -- no error, no size
+    check, and the caller's own `data_provenance.period_requested` would then
+    say "2y" while the actual data spanned 5 years. This is what actually
+    happened and was reported.
+    """
+    tmp_cache = tmp_path / "cache"
+
+    def fetch_5y(ticker, start, end, interval, period=None):
+        return _frame(FRESH_END, n=1255)  # ~5 years of daily bars
+
+    def fetch_2y(ticker, start, end, interval, period=None):
+        return _frame(FRESH_END, n=501)  # ~2 years of daily bars
+
+    first = dl.get_prices("TEST", cache_dir=tmp_cache, fetcher=fetch_5y, period="5y")
+    assert len(first.df) == 1255
+
+    # A DIFFERENT period must not be silently satisfied by the 5y cache --
+    # it must be treated as a cache miss and fetched fresh with its own key.
+    second = dl.get_prices("TEST", cache_dir=tmp_cache, fetcher=fetch_2y, period="2y")
+    assert second.source == "fixture"
+    assert len(second.df) == 501
+
+    # And the 5y cache must still be there, untouched, under its own key.
+    third = dl.get_prices(
+        "TEST", cache_dir=tmp_cache,
+        fetcher=lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not refetch")),
+        period="5y",
+    )
+    assert third.source == "cache"
+    assert len(third.df) == 1255
